@@ -13,7 +13,7 @@ import html
 import json
 from collections.abc import Sequence
 
-TITLE = "Fugleramme"
+TITLE = "Fugleramme:fork en galego"
 
 # The radio for a network the scan did not list. Longer than the 32 bytes an SSID holds, so no
 # network is called this.

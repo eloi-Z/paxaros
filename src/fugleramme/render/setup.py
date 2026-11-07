@@ -22,7 +22,7 @@ _TITLE = 0.075  # type sizes, of the short side, before shrinking to fit
 _BODY = 0.045
 _NAME = 0.17  # "Fugleramme" across the top
 
-NAME = "Fugleramme"
+NAME = "Fugleramme:fork en galego"
 _QUIET = 4  # modules of white around the code, which scanners need
 _LEADING = 1.35
 
