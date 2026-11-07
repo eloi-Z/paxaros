@@ -60,8 +60,8 @@ DEFAULT_DETECTOR_URL = f"http://127.0.0.1:{BIRDNET_PORT}"
 DOCS_URL = "https://arnegiacomo.dev/fugleramme/"
 
 # Self-update source. HTTPS, not the ssh origin: a service fetch has no agent.
-REPO_HTTPS_URL = "https://github.com/arnegiacomo/fugleramme.git"
-RELEASES_API = "https://api.github.com/repos/arnegiacomo/fugleramme/releases/latest"
+REPO_HTTPS_URL = "https://github.com/eloi-Z/paxaros.git"
+RELEASES_API = "https://api.github.com/repos/eloi-Z/paxaros/releases/latest"
 
 # Where the admin sends a list of birds without art.
 NEW_ISSUE_URL = "https://github.com/arnegiacomo/fugleramme/issues/new"
