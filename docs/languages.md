@@ -1,6 +1,6 @@
 # Languages
 
-The species names on the rendered page come from BirdNET-Go, in any of its species languages, or from [BirdWeather](operations.md#using-birdweather-instead-of-birdnet-go) if you use that instead.
+The species names on the rendered page come from BirdNET-Go, in any of its species languages, or from [BirdWeather](operations.md#using-birdweather-instead-of-birdnet-go) if you use that instead, or from [a file of your own](#your-own-names).
 
 > [!NOTE]
 > The admin page is currently only offered in English.
@@ -31,6 +31,26 @@ set to. That can be any of
 With BirdWeather, the list is instead the languages BirdWeather has names in. A name it lacks shows as the scientific name.
 
 Dates on the page follow the primary language.
+
+## Your own names
+
+For a language neither BirdNET-Go nor BirdWeather has, write the names yourself.
+Put a file named for the language's code in a `custom-names` folder beside the
+settings file - on a Pi, `~/fugleramme/detector/data/custom-names/`. Galician is
+`gl.json`:
+
+```json
+{
+  "Turdus merula": "merlo común",
+  "Erithacus rubecula": "paporrubio"
+}
+```
+
+Each key is a scientific name as BirdNET-Go writes it, each value the name to show.
+The language is then in the list under [Labels](display.md#labels), and a bird the
+file leaves out shows as its scientific name. A file for a language that is already
+in the list, such as `es.json`, replaces those names. Saving the file is enough:
+the page picks it up on its next render. Updates never touch the folder.
 
 ## Scripts and typefaces
 

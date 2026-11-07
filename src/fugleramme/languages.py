@@ -1,8 +1,9 @@
 """Species names in the reader's language, from the detector.
 
-Nothing is vendored: the detector is the only name source. A BirdNET-Go's come
-over HTTP from the same instance the frame reads its detections from - through that
-source's session, since PrivateMode gates these two endpoints as well:
+Nothing is vendored: the names are the detector's, or the owner's own files
+(below). A BirdNET-Go's come over HTTP from the same instance the frame reads its
+detections from - through that source's session, since PrivateMode gates these
+two endpoints as well:
 
     GET /api/v2/settings/locales           -> {code: English name}, all label locales
     GET /api/v2/species/dictionary/<code>   -> {scientific name: common name}, gzipped
@@ -29,6 +30,12 @@ locale list gets any answer, 401 included, and stays offered from then on.
 A BirdWeather station has none of that: `common_names` hands over every language
 its birds are named in at once, and those are the languages offered. They cache
 under `<cache_dir>/names/birdweather.json`, with the station they name.
+
+The one source beside the detector is the owner's own: a `<code>.json` of
+{scientific name: common name} in `<cache_dir>/custom-names/` is offered as that
+language, whichever detector is read, and takes the place of the detector's
+dictionary of the same code. It is for a language no detector names, so it is
+read off the disk as it stands, never cached or written.
 """
 
 from __future__ import annotations
@@ -204,8 +211,55 @@ def cache_path(cache_dir: Path, name: str) -> Path:
     return Path(cache_dir) / "names" / f"{name}.json"
 
 
+# Beside `names/`, not in it: that folder is the detector's cache, rewritten at will.
+CUSTOM_DIR = "custom-names"
+
+_warned: set[Path] = set()  # unreadable custom files, logged once each
+
+
+def _custom_files(cache_dir: Path) -> dict[str, Path]:
+    """The owner's own dictionaries as {code: file}. A file named for one of the
+    pseudo-languages would shadow it, so it is no language."""
+    files = sorted((Path(cache_dir) / CUSTOM_DIR).glob("*.json"))
+    return {f.stem.lower(): f for f in files if f.stem.lower() not in (SCIENTIFIC, STATION)}
+
+
+def _custom_names(path: Path) -> tuple[dict[str, str], str]:
+    """A custom dictionary and its version, a hash of the file, so an edit
+    re-renders the page. Keyed under the name as written and its `canonical`
+    one, as the station's are, so either spelling of a reclassified bird finds it."""
+    from .names import canonical  # late: names sits above this module
+
+    try:
+        raw = path.read_bytes()
+        table = json.loads(raw)
+    except (OSError, ValueError):
+        table = None
+    if not isinstance(table, dict):
+        if path not in _warned:
+            _warned.add(path)
+            log.warning("Ignoring %s: not a JSON object of names", path)
+        return {}, ""
+    names: dict[str, str] = {}
+    for sci, common in table.items():
+        if not isinstance(common, str) or not sci.strip() or not common.strip():
+            continue
+        names.setdefault(sci.strip(), common.strip())
+        names.setdefault(canonical(sci.strip()), common.strip())
+    return names, hashlib.sha256(raw).hexdigest()[:12]
+
+
 def catalog(cache_dir: Path) -> dict[str, str]:
-    """Selectable languages as {code: display name}, SCIENTIFIC always first.
+    """Selectable languages as {code: display name}, SCIENTIFIC always first: the
+    detector's, then the owner's own. One of a code the detector has keeps the
+    detector's name for it, since only the names behind it change."""
+    found = _detector_catalog(cache_dir)
+    custom = {code: _language_name(code) for code in _custom_files(cache_dir) if code not in found}
+    return {**found, **custom}
+
+
+def _detector_catalog(cache_dir: Path) -> dict[str, str]:
+    """The detector's languages as {code: display name}, SCIENTIFIC always first.
 
     Cached in the process and on disk, so the admin page normally costs nothing
     and a restart with BirdNET-Go down still offers what it last found.
@@ -337,9 +391,13 @@ def ordered(languages: dict[str, str]) -> list[tuple[str, str]]:
 
 def dictionary(code: str, cache_dir: Path) -> tuple[dict[str, str], str]:
     """A locale's {scientific name: common name} and its version, or ({}, "")
-    when BirdNET-Go has never been reachable for it."""
+    when BirdNET-Go has never been reachable for it. The owner's own file for
+    the code, when there is one, is read instead."""
     if code in (SCIENTIFIC, NONE):
         return {}, ""
+    custom = _custom_files(cache_dir).get(code)
+    if custom is not None:
+        return _custom_names(custom)
     global _station_locale
     with _lock:
         if _kind() == BIRDWEATHER:

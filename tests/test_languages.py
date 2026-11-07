@@ -721,3 +721,76 @@ def test_the_names_follow_the_detectors_kind(detector, tmp_path):
     store.update(detector_kind=BIRDNET_GO, detector_url=birdnet)
     assert catalog(tmp_path)[STATION] == "Estonian (BirdNET-Go locale)"
     assert namer("nb", NONE, tmp_path).label("Turdus merula") == "Svarttrost"
+
+
+def _custom(tmp_path, code, body):
+    """An owner's own dictionary: `body` as JSON, or as written when it is text."""
+    folder = tmp_path / languages.CUSTOM_DIR
+    folder.mkdir(exist_ok=True)
+    path = folder / f"{code}.json"
+    path.write_text(body if isinstance(body, str) else json.dumps(body))
+    return path
+
+
+def test_an_owners_own_dictionary_is_offered_as_its_language(monkeypatch, tmp_path):
+    _api(monkeypatch, names={"nb": {}})
+    _custom(tmp_path, "gl", {"Turdus merula": "merlo común"})
+
+    assert catalog(tmp_path) == {**BARE, "nb": "Norwegian", "gl": "Galician"}
+    assert (
+        namer("gl", SCIENTIFIC, tmp_path).label("Turdus merula") == "Merlo común\n(Turdus merula)"
+    )
+
+
+def test_an_owners_own_dictionary_needs_no_detector(monkeypatch, tmp_path):
+    _api(monkeypatch, locales=None, names={})
+    _custom(tmp_path, "gl", {"Turdus merula": "merlo común"})
+
+    assert catalog(tmp_path) == {**UNHEARD, "gl": "Galician"}
+    assert namer("gl", NONE, tmp_path).label("Turdus merula") == "Merlo común"
+
+
+def test_an_owners_own_dictionary_takes_the_place_of_the_detectors(monkeypatch, tmp_path):
+    fetched = _api(monkeypatch)
+    _custom(tmp_path, "nb", {"Turdus merula": "min trost"})
+
+    assert namer("nb", NONE, tmp_path).label("Turdus merula") == "Min trost"
+    assert fetched == []  # the detector's dictionary is never asked for
+    assert catalog(tmp_path)["nb"] == "Norwegian"
+
+
+def test_editing_an_owners_own_dictionary_reaches_the_page(monkeypatch, tmp_path):
+    _api(monkeypatch)
+    path = _custom(tmp_path, "gl", {"Turdus merula": "merlo"})
+    before = namer("gl", NONE, tmp_path).key
+
+    path.write_text(json.dumps({"Turdus merula": "merlo común"}))
+
+    assert namer("gl", NONE, tmp_path).key != before
+    assert namer("gl", NONE, tmp_path).label("Turdus merula") == "Merlo común"
+
+
+def test_an_owners_dictionary_answers_to_both_spellings_of_a_reclassified_bird(
+    monkeypatch, tmp_path
+):
+    _api(monkeypatch)
+    _custom(tmp_path, "gl", {"Corvus monedula": "choia"})
+
+    assert namer("gl", NONE, tmp_path).label("Coloeus monedula") == "Choia"
+    assert namer("gl", NONE, tmp_path).label("Corvus monedula") == "Choia"
+
+
+def test_an_unreadable_owners_dictionary_names_nothing(monkeypatch, tmp_path):
+    _api(monkeypatch)
+    _custom(tmp_path, "gl", "{not json")
+
+    assert "gl" in catalog(tmp_path)
+    assert namer("gl", NONE, tmp_path).label("Turdus merula") == "Turdus merula"
+
+
+def test_a_file_named_for_a_pseudo_language_is_no_language(monkeypatch, tmp_path):
+    _api(monkeypatch, names={})
+    _custom(tmp_path, SCIENTIFIC, {"Turdus merula": "x"})
+    _custom(tmp_path, STATION, {"Turdus merula": "x"})
+
+    assert catalog(tmp_path) == BARE
