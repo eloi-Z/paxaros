@@ -334,6 +334,7 @@ MODES: dict[str, Mode] = {
         lambda ctx: [h[0]] if (h := _holder(ctx)) else [],
     ),
     "arrival": Mode("Newest arrival", _arrival_page, _arrival_key, lambda ctx: _one(_arrival(ctx))),
+    "cycle": Mode("Cycle", _collage, _collage_key, _collage_subjects, windowed=True),
 }
 
 DEFAULT_MODE = "collage"

@@ -433,11 +433,15 @@ def make_handler(
                 page.save(buffer, format="PNG")
                 self._send_cached(buffer.getvalue(), "image/png")
                 return
+            settings = store.get()
+            override = self._query().get("mode", [""])[0]
+            if settings.mode == "cycle" and override in modes.MODES:
+                settings = replace(settings, mode=override)
             if source.base_url != last_from:
                 last_page, last_from = None, source.base_url
             test = status.testing()
             try:
-                ctx = self._context(under_test(store.get(), test))
+                ctx = self._context(under_test(settings, test))
                 last_page = modes.png_bytes(ctx) if test is None else _banded_png(ctx)
             except Unavailable as exc:
                 if last_page is None:
@@ -508,7 +512,7 @@ def make_handler(
                 )
             )
             token = modes.token(key)
-            self._send(200, json.dumps({"token": token}).encode(), JSON)
+            self._send(200, json.dumps({"token": token, "mode": settings.mode}).encode(), JSON)
 
         def _species(self):
             ctx = self._context(self._edited())

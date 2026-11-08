@@ -57,6 +57,9 @@
 <noscript><p>Paxaros do xardín needs JavaScript to run in a browser.</p></noscript>
 <script>
   const DELAY = 5000;  // /state is one query, no render
+  const cycleModes = ["collage", "latest", "arrival"];
+  let cycleIndex = 0;
+  let kioskMode = "collage";
   const collage = document.getElementById("collage");
   const paper = document.getElementById("paper");
   const over = document.getElementById("over");
@@ -64,6 +67,16 @@
   // Only ever seen before the first render: once a page exists the server holds
   // it through an outage, so a blip leaves the birds up rather than a message.
   const show = (page) => { collage.hidden = !page; waiting.hidden = page; };
+  const loadMode = (mode) => {
+    const next = new Image();
+    next.onload = () => swap(next);
+    next.src = "/collage.png?mode=" + encodeURIComponent(mode) + "&v=" + Date.now();
+  };
+  const cycle = () => {
+    if (kioskMode !== "cycle") return;
+    cycleIndex = (cycleIndex + 1) % cycleModes.length;
+    loadMode(cycleModes[cycleIndex]);
+  };
   const TILE = 512;  // render/paper.py TILE
   // Match the page's corner and scale, so its paper runs on past the edge.
   const fitPaper = () => {
@@ -106,18 +119,24 @@
   // A mouse wakes the controls while it moves; a tap toggles them, as in a photo viewer.
   addEventListener("pointermove", (e) => { if (e.pointerType === "mouse") wake(); });
   addEventListener("pointerdown", (e) => {
-    if (e.pointerType === "mouse" || !root.classList.contains("awake")) return wake();
-    if (!e.target.closest("#settings")) sleep();
+    const settingsTap = e.target.closest("#settings");
+    if (e.pointerType === "mouse" || !root.classList.contains("awake")) wake();
+    if (kioskMode === "cycle" && !settingsTap) cycle();
+    if (settingsTap) return;
+    if (e.pointerType === "touch" && root.classList.contains("awake")) sleep();
   });
   let token = null;
   async function tick() {
     try {
       const state = await (await fetch("/state", {cache: "no-store"})).json();
+      kioskMode = state.mode || kioskMode;
       if (state.token !== token) {
         token = state.token;
         const next = new Image();  // decode before swapping, so the frame never blanks
         next.onload = () => swap(next);
-        next.src = "/collage.png?v=" + encodeURIComponent(token);
+        const mode = kioskMode === "cycle" ? cycleModes[cycleIndex] : "";
+        const query = mode ? "?mode=" + encodeURIComponent(mode) + "&" : "?";
+        next.src = "/collage.png" + query + "v=" + encodeURIComponent(token);
       }
     } catch (e) {}  // transient: retry next tick
     setTimeout(tick, DELAY);
