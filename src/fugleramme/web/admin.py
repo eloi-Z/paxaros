@@ -483,7 +483,7 @@ INSTALL_COMMAND = (
 # Why the Wi-Fi setup cannot run, as wifi.Setup.start leaves it on the state. HTML.
 _WIFI_PROBLEMS = {
     "sudo refuses nmcli": (
-        "Fugleramme:fork en galego isn't allowed to change this Pi's Wi-Fi. To allow it, run this on the Pi: "
+        "Fork en galego de Fugleramme isn't allowed to change this Pi's Wi-Fi. To allow it, run this on the Pi: "
         f'<code class="cmd">{INSTALL_COMMAND}</code>'
     ),
     "no Wi-Fi": "This Pi has no Wi-Fi.",

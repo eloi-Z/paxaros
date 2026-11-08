@@ -20,9 +20,9 @@ _PAD = 0.05  # of the short side, inside the mat's margin, so nothing touches th
 _GAP = 0.05  # between the code and the words
 _TITLE = 0.075  # type sizes, of the short side, before shrinking to fit
 _BODY = 0.045
-_NAME = 0.17  # "Fugleramme" across the top
+_NAME = 0.17  # "Paxaros do xardín" across the top
 
-NAME = "Fugleramme:fork en galego"
+NAME = "Paxaros do xardín"
 _QUIET = 4  # modules of white around the code, which scanners need
 _LEADING = 1.35
 
