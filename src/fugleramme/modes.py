@@ -68,6 +68,7 @@ class Context:
     ranking: str
     layout: str
     spotlight: bool
+    spotlight_mode: str
     margin: Edges  # of the short side; the settings are percents
     textured: bool = True
 
@@ -108,6 +109,7 @@ def context(
         ranking=settings.ranking,
         layout=settings.layout,
         spotlight=settings.spotlight,
+        spotlight_mode=settings.spotlight_mode,
         margin=Edges(*(m / 100 for m in settings.margins(panel))),
         textured=textured,
     )
@@ -189,10 +191,13 @@ def _plate(ctx: Context, name: str | None, note: str = "", art: Path | None = No
 
 
 def _spotlit(ctx: Context) -> str | None:
-    """The bird in the collage's middle: the species of the latest call, as
-    the Latest bird page has it."""
+    """The bird in the collage's middle: either the species of the latest call,
+    or the newest arrival in the record."""
     if not ctx.spotlight:
         return None
+    if ctx.spotlight_mode == "arrival":
+        species = _arrival(ctx)
+        return species.scientific_name if species else None
     holder = _holder(ctx)
     return holder[0] if holder else None
 

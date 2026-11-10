@@ -512,7 +512,13 @@ def make_handler(
                 )
             )
             token = modes.token(key)
-            self._send(200, json.dumps({"token": token, "mode": settings.mode}).encode(), JSON)
+            self._send(
+                200,
+                json.dumps(
+                    {"token": token, "mode": settings.mode, "lookback_hours": settings.lookback_hours}
+                ).encode(),
+                JSON,
+            )
 
         def _species(self):
             ctx = self._context(self._edited())

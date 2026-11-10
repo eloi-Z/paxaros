@@ -274,9 +274,11 @@ def test_the_collage_fields_render_and_a_plate_mode_save_leaves_the_layout_alone
 def test_the_spotlight_box_saves_both_ways(tmp_path, source):
     page = _page(tmp_path, source())
     assert 'name="spotlight"' in page and "spotlight" in _declared(page)
+    assert 'name="spotlight_mode" value="arrival"' in page
     store = SettingsStore(tmp_path / "s.json")
-    on = {admin.CHECKBOXES: ["spotlight"], "spotlight": ["on"]}
-    assert store.update(**admin.form_changes(on)).spotlight
+    on = {admin.CHECKBOXES: ["spotlight"], "spotlight": ["on"], "spotlight_mode": ["arrival"]}
+    saved = store.update(**admin.form_changes(on))
+    assert saved.spotlight and saved.spotlight_mode == "arrival"
     assert not store.update(**admin.form_changes({admin.CHECKBOXES: ["spotlight"]})).spotlight
 
 

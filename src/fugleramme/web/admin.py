@@ -1063,7 +1063,7 @@ def _radio_field(
     return f'<div class="field"{tag}><span>{label}</span>{_radios(name, options, active)}</div>'
 
 
-SPOTLIGHT = "Showcase the latest heard bird in the middle."
+SPOTLIGHT = "Showcase one bird in the middle. Choose whether it is the latest heard or the newest arrival."
 
 
 def _layout_field(settings: Settings) -> str:
@@ -1076,9 +1076,15 @@ def _layout_field(settings: Settings) -> str:
         f"<span>Spotlight mode {_hint(SPOTLIGHT)}</span>",
         settings.spotlight,
     )
+    modes_view = _radios(
+        "spotlight_mode",
+        [("latest", "Last heard"), ("arrival", "Last species added")],
+        settings.spotlight_mode,
+    )
     return (
         f'<div class="field" id="layout"><span>Layout {_hint(hint)}</span>'
         f"{_radios('layout', options, settings.layout)}"
+        f'<div class="sub"><small>Spotlight target</small>{modes_view}</div>'
         f'<input type="hidden" name="{CHECKBOXES}" value="spotlight">{spotlight}</div>'
     )
 

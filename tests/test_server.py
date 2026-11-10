@@ -142,6 +142,12 @@ def test_an_unknown_route_is_a_404(frame):
     assert _fetch(frame + "/nope")[0] == 404
 
 
+def test_state_reports_the_selected_lookback_window(frame):
+    state = json.loads(_fetch(frame + "/state")[2])
+    assert "lookback_hours" in state
+    assert state["lookback_hours"] == 24
+
+
 def test_a_page_that_cannot_reach_the_detector_says_so(stranded):
     """A 503 the kiosk retries past, not a blank page it would swap onto the glass."""
     for route in ("/collage.png", "/preview.png", "/state", "/species"):

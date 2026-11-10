@@ -127,8 +127,10 @@ class Settings:
     style: str = ""
     # How the collage packs its birds; a plate has one bird and ignores it.
     layout: str = DEFAULT_LAYOUT
-    # The collage with the latest bird drawn large in the middle (#185).
+    # The collage with one bird drawn large in the middle (#185): last heard or
+    # the newest arrival, whichever the user picks.
     spotlight: bool = False
+    spotlight_mode: str = "latest"
     auto_update: bool = False
     show_names: bool = True
     # Numbers on the birds and the names in a key beside them, poster style.
@@ -362,6 +364,9 @@ def _coerce(raw: dict, base: Settings | None = None) -> Settings:
         style=_style(raw, d.style),
         layout=_one_of(str(raw.get("layout", d.layout)), LAYOUTS, d.layout),
         spotlight=_as_bool(raw.get("spotlight"), d.spotlight),
+        spotlight_mode=_one_of(
+            str(raw.get("spotlight_mode", d.spotlight_mode)), ("latest", "arrival"), d.spotlight_mode
+        ),
         auto_update=_as_bool(raw.get("auto_update"), d.auto_update),
         show_names=_as_bool(raw.get("show_names"), d.show_names),
         name_key=_as_bool(raw.get("name_key"), d.name_key),

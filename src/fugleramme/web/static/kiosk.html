@@ -23,6 +23,16 @@
   #paper.up { opacity: 1; }
   /* The incoming page, centred by the collage's own rules; never eats a click. */
   #over { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  #loading {
+    position: fixed; inset: 0; z-index: 2; display: grid; place-items: center;
+    background: rgba(242, 237, 226, 0.8); backdrop-filter: blur(1px);
+  }
+  #loading[hidden] { display: none; }
+  #loading-text {
+    max-width: min(80vw, 30rem); padding: 0.9rem 1.25rem; border-radius: 999px;
+    background: rgba(92, 90, 84, 0.08); color: #5c5a54; font: 700 1rem/1.3 system-ui, sans-serif;
+    text-align: center; letter-spacing: 0.02em;
+  }
   img { max-width: 100%; max-height: 100vh; object-fit: contain; }
   .fade { animation: in 3s ease-in-out; }
   @keyframes in { from { opacity: 0; } }
@@ -58,6 +68,9 @@
 <body>
 <div id="paper"></div>
 <img id="collage" src="/collage.png" alt="Birds seen recently" hidden>
+<div id="loading" hidden>
+  <div id="loading-text">Páxaros vistos</div>
+</div>
 <p id="waiting" hidden>Waiting for BirdNET-Go<br><a href="/admin">Configure it in the admin panel</a></p>
 <div id="over"></div>
 <div id="controls">
@@ -79,18 +92,47 @@
   let cycleTaps = [];
   const cycleNote = document.getElementById("cycle-note");
   const collage = document.getElementById("collage");
+  const loading = document.getElementById("loading");
+  const loadingText = document.getElementById("loading-text");
   const paper = document.getElementById("paper");
   const over = document.getElementById("over");
   const waiting = document.getElementById("waiting");
+  let lookbackHours = 24;
+  const periodText = (hours) => {
+    if (hours === 0) return "en todo o tempo";
+    if (hours === 0.25) return "15 minutos";
+    if (hours === 0.5) return "30 minutos";
+    if (hours === 1) return "1 hora";
+    if (hours === 3) return "3 horas";
+    if (hours === 6) return "6 horas";
+    if (hours === 12) return "12 horas";
+    if (hours === 24) return "24 horas";
+    if (hours === 72) return "3 días";
+    if (hours === 168) return "7 días";
+    if (hours === 720) return "30 días";
+    return `${Number(hours)} horas`;
+  };
+  const loadingMessage = () => {
+    const slot = periodText(lookbackHours);
+    const prefix = lookbackHours >= 24 ? "nos últimos" : "nas últimas";
+    const whole = lookbackHours === 0 ? "en todo o tempo" : `${prefix} ${slot}`;
+    loadingText.textContent = `Páxaros vistos ${whole}`;
+  };
   // Only ever seen before the first render: once a page exists the server holds
   // it through an outage, so a blip leaves the birds up rather than a message.
   const show = (page) => { collage.hidden = !page; waiting.hidden = page; };
   const syncModeNote = () => {
     cycleNote.classList.toggle("visible", kioskMode === "cycle");
   };
+  const showLoading = () => {
+    loadingMessage();
+    loading.hidden = false;
+  };
+  const hideLoading = () => { loading.hidden = true; };
   const loadMode = (mode) => {
     const next = new Image();
-    next.onload = () => swap(next);
+    showLoading();
+    next.onload = () => { hideLoading(); swap(next); };
     next.src = "/collage.png?mode=" + encodeURIComponent(mode) + "&v=" + Date.now();
   };
   const cycle = () => {
@@ -119,6 +161,7 @@
   const calm = matchMedia("(prefers-reduced-motion: reduce)");
   // Hidden until it loads, so the first page fades in like an update.
   collage.onload = () => {
+    hideLoading();
     const reveal = collage.hidden && !calm.matches;
     show(true);
     fitPaper();
@@ -166,11 +209,14 @@
     try {
       const state = await (await fetch("/state", {cache: "no-store"})).json();
       kioskMode = state.mode || kioskMode;
+      lookbackHours = Number(state.lookback_hours ?? lookbackHours);
+      loadingMessage();
       syncModeNote();
       if (state.token !== token) {
         token = state.token;
         const next = new Image();  // decode before swapping, so the frame never blanks
-        next.onload = () => swap(next);
+        showLoading();
+        next.onload = () => { hideLoading(); swap(next); };
         const mode = kioskMode === "cycle" ? cycleModes[cycleIndex] : "";
         const query = mode ? "?mode=" + encodeURIComponent(mode) + "&" : "?";
         next.src = "/collage.png" + query + "v=" + encodeURIComponent(token);
