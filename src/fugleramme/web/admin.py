@@ -1063,7 +1063,7 @@ def _radio_field(
     return f'<div class="field"{tag}><span>{label}</span>{_radios(name, options, active)}</div>'
 
 
-SPOTLIGHT = "Showcase one bird in the middle. Choose whether it is the latest heard or the newest arrival."
+SPOTLIGHT = "Showcase one bird in the middle. Choose whether it is the latest heard, the newest arrival, or the rarest in the window."
 
 
 def _layout_field(settings: Settings) -> str:
@@ -1078,7 +1078,7 @@ def _layout_field(settings: Settings) -> str:
     )
     modes_view = _radios(
         "spotlight_mode",
-        [("latest", "Last heard"), ("arrival", "Last species added")],
+        [("latest", "Last heard"), ("arrival", "Last species added"), ("rarest", "Rarest")],
         settings.spotlight_mode,
     )
     return (

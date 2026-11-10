@@ -355,7 +355,7 @@ wheels = [
 
 [[package]]
 name = "fugleramme"
-version = "0.32.9"
+version = "0.32.10"
 source = { editable = "." }
 dependencies = [
     { name = "babel" },

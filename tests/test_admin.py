@@ -275,10 +275,11 @@ def test_the_spotlight_box_saves_both_ways(tmp_path, source):
     page = _page(tmp_path, source())
     assert 'name="spotlight"' in page and "spotlight" in _declared(page)
     assert 'name="spotlight_mode" value="arrival"' in page
+    assert 'name="spotlight_mode" value="rarest"' in page
     store = SettingsStore(tmp_path / "s.json")
-    on = {admin.CHECKBOXES: ["spotlight"], "spotlight": ["on"], "spotlight_mode": ["arrival"]}
+    on = {admin.CHECKBOXES: ["spotlight"], "spotlight": ["on"], "spotlight_mode": ["rarest"]}
     saved = store.update(**admin.form_changes(on))
-    assert saved.spotlight and saved.spotlight_mode == "arrival"
+    assert saved.spotlight and saved.spotlight_mode == "rarest"
     assert not store.update(**admin.form_changes({admin.CHECKBOXES: ["spotlight"]})).spotlight
 
 

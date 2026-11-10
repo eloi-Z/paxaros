@@ -190,14 +190,25 @@ def _plate(ctx: Context, name: str | None, note: str = "", art: Path | None = No
     )
 
 
+def _rarest(ctx: Context) -> str | None:
+    """The least-heard species in the selected window, among the birds this style can draw."""
+    keys = ctx.drawable()
+    counted = [(name, n) for name, n in ctx.source.species_since(ctx.lookback_hours) if normalize(name) in keys]
+    if not counted:
+        return None
+    return min(counted, key=lambda pair: (pair[1], pair[0]))[0]
+
+
 def _spotlit(ctx: Context) -> str | None:
-    """The bird in the collage's middle: either the species of the latest call,
-    or the newest arrival in the record."""
+    """The bird in the collage's middle: the latest call, the newest arrival,
+    or the rarest species in the selected window."""
     if not ctx.spotlight:
         return None
     if ctx.spotlight_mode == "arrival":
         species = _arrival(ctx)
         return species.scientific_name if species else None
+    if ctx.spotlight_mode == "rarest":
+        return _rarest(ctx)
     holder = _holder(ctx)
     return holder[0] if holder else None
 

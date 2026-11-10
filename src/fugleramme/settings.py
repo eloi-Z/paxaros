@@ -127,8 +127,8 @@ class Settings:
     style: str = ""
     # How the collage packs its birds; a plate has one bird and ignores it.
     layout: str = DEFAULT_LAYOUT
-    # The collage with one bird drawn large in the middle (#185): last heard or
-    # the newest arrival, whichever the user picks.
+    # The collage with one bird drawn large in the middle (#185): last heard,
+    # the newest arrival or the rarest in the selected window, whichever the user picks.
     spotlight: bool = False
     spotlight_mode: str = "latest"
     auto_update: bool = False
@@ -365,7 +365,9 @@ def _coerce(raw: dict, base: Settings | None = None) -> Settings:
         layout=_one_of(str(raw.get("layout", d.layout)), LAYOUTS, d.layout),
         spotlight=_as_bool(raw.get("spotlight"), d.spotlight),
         spotlight_mode=_one_of(
-            str(raw.get("spotlight_mode", d.spotlight_mode)), ("latest", "arrival"), d.spotlight_mode
+            str(raw.get("spotlight_mode", d.spotlight_mode)),
+            ("latest", "arrival", "rarest"),
+            d.spotlight_mode,
         ),
         auto_update=_as_bool(raw.get("auto_update"), d.auto_update),
         show_names=_as_bool(raw.get("show_names"), d.show_names),
