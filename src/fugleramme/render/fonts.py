@@ -1,6 +1,6 @@
 """Vendored typefaces for the species names on the page.
 
-Seven italics - scientific names are conventionally italic - spanning old-style,
+Ten italics - scientific names are conventionally italic - spanning old-style,
 Didone, calligraphic, transitional and slab, picked for how they survive the
 panel's six colors: at label size a hairline thin speckles or drops out
 entirely. Cormorant Garamond is the exception, an engraved display face for the
@@ -35,12 +35,17 @@ FONTS: dict[str, tuple[str, str]] = {
     "playfair": ("Playfair Display", "playfairdisplay/PlayfairDisplay-Italic.ttf"),
     "alegreya": ("Alegreya", "alegreya/Alegreya-Italic.ttf"),
     "bitter": ("Bitter", "bitter/Bitter-Italic.ttf"),
+    "museum": ("Crimson Pro", "crimsonpro/CrimsonPro-Italic[wght].ttf"),
+    "museum2": ("Merriweather", "merriweather/Merriweather-Italic[opsz,wdth,wght].ttf"),
+    "museum3": ("Libre Caslon", "librecaslontext/LibreCaslonText-Italic[wght].ttf"),
 }
 
 DEFAULT_FONT = "gentium"
 
 # Fraction of the page's short side, so a name holds its proportion at any resolution.
 LABEL_SIZES: dict[str, tuple[str, float]] = {
+    "minuscule": ("Minuscule", 0.015),
+    "extrasmall": ("Extra small", 0.018),
     "small": ("Small", 0.024),
     "medium": ("Medium", 0.032),
     "large": ("Large", 0.042),

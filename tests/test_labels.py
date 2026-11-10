@@ -60,6 +60,20 @@ def test_unknown_font_falls_back_to_the_default_file():
     assert fonts.load("bitter", 20).path != fonts.load(fonts.DEFAULT_FONT, 20).path
 
 
+def test_minuscule_is_smaller_than_extra_small():
+    assert fonts.LABEL_SIZES["minuscule"][1] < fonts.LABEL_SIZES["extrasmall"][1]
+
+
+def test_font_aliases_point_to_distinct_faces():
+    aliases = {
+        "museum": "cormorantgaramond/CormorantGaramond-Italic.ttf",
+        "museum2": "ebgaramond/EBGaramond-Italic.ttf",
+        "museum3": "librebaskerville/LibreBaskerville-Italic.ttf",
+    }
+    for key, filename in aliases.items():
+        assert fonts.FONTS[key][1] != filename
+
+
 def test_flat_label_has_no_intermediate_alpha():
     font = fonts.load(fonts.DEFAULT_FONT, 26)
     flat = set(np.unique(np.asarray(text_mask("Pica pica", font, flat=True))))

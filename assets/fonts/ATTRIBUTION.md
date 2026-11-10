@@ -1,7 +1,7 @@
 # Attribution and licensing
 
-The species names on the page are set in one of seven italics, chosen in the
-admin interface. All seven are under the **SIL Open Font License 1.1**; each
+The species names on the page are set in one of ten italics, chosen in the
+admin interface. All ten are under the **SIL Open Font License 1.1**; each
 family ships with its own `OFL.txt` in this directory, which is the copyright
 notice the licence requires be distributed with the font.
 
@@ -20,10 +20,13 @@ unaffected.
 | `playfairdisplay/` | Playfair Display | [Claus Eggers Sørensen](https://github.com/clauseggers/Playfair) |
 | `alegreya/` | Alegreya | [Huerta Tipográfica](https://github.com/huertatipografica/Alegreya) |
 | `bitter/` | Bitter | [Huerta Tipográfica](https://github.com/solmatas/BitterPro) |
+| `crimsonpro/` | Crimson Pro | [Google Fonts](https://github.com/google/fonts/tree/main/ofl/crimsonpro) |
+| `merriweather/` | Merriweather | [Google Fonts](https://github.com/google/fonts/tree/main/ofl/merriweather) |
+| `librecaslontext/` | Libre Caslon Text | [Google Fonts](https://github.com/google/fonts/tree/main/ofl/librecaslontext) |
 
 All were taken from the [Google Fonts](https://github.com/google/fonts)
 distribution. Only the italic is vendored - a scientific name is set in italic -
-and six of the seven are variable fonts, instantiated at weight 400 by
+and six of the ten are variable fonts, instantiated at weight 400 by
 `fonts.py`.
 
 ## Fallbacks
