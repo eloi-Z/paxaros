@@ -37,9 +37,21 @@
   .awake #controls, #controls:focus-within { opacity: 1; }
   .awake #settings { pointer-events: auto; }
   html:not(.awake) { cursor: none; }
-  #settings { display: grid; place-items: center; width: 44px; height: 44px; color: #5c5a54; filter: drop-shadow(0 0 3px #f2ede2); }
+  #settings-wrap {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem;
+    pointer-events: auto;
+  }
+  #settings {
+    display: grid; place-items: center; width: 44px; height: 44px; color: #5c5a54;
+    filter: drop-shadow(0 0 3px #f2ede2);
+  }
   #settings svg { width: 26px; height: 26px; }
   #settings:focus-visible { outline: 2px solid #5c5a54; border-radius: 50%; }
+  #cycle-note {
+    display: none; padding: 0.25rem 0.5rem; border-radius: 999px; background: rgba(92, 90, 84, 0.12);
+    color: #5c5a54; font: 0.7rem/1.2 system-ui, sans-serif; letter-spacing: 0.02em;
+  }
+  #cycle-note.visible { display: block; }
   @media (prefers-reduced-motion: reduce) { #controls { transition: none; } }
 </style>
 </head>
@@ -49,17 +61,23 @@
 <p id="waiting" hidden>Waiting for BirdNET-Go<br><a href="/admin">Configure it in the admin panel</a></p>
 <div id="over"></div>
 <div id="controls">
-  <a id="settings" href="/admin" aria-label="Settings" title="Settings">
-    <!-- Lucide's "settings" icon (ISC licence) -->
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-  </a>
+  <div id="settings-wrap">
+    <div id="cycle-note">Triple click/tap para cambiar vista</div>
+    <a id="settings" href="/admin" aria-label="Settings" title="Settings">
+      <!-- Lucide's "settings" icon (ISC licence) -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+    </a>
+  </div>
 </div>
 <noscript><p>Paxaros do xardín needs JavaScript to run in a browser.</p></noscript>
 <script>
   const DELAY = 5000;  // /state is one query, no render
   const cycleModes = ["collage", "latest", "arrival"];
+  const cycleWindow = 2000; // three taps within this many milliseconds triggers a cycle
   let cycleIndex = 0;
   let kioskMode = "collage";
+  let cycleTaps = [];
+  const cycleNote = document.getElementById("cycle-note");
   const collage = document.getElementById("collage");
   const paper = document.getElementById("paper");
   const over = document.getElementById("over");
@@ -67,6 +85,9 @@
   // Only ever seen before the first render: once a page exists the server holds
   // it through an outage, so a blip leaves the birds up rather than a message.
   const show = (page) => { collage.hidden = !page; waiting.hidden = page; };
+  const syncModeNote = () => {
+    cycleNote.classList.toggle("visible", kioskMode === "cycle");
+  };
   const loadMode = (mode) => {
     const next = new Image();
     next.onload = () => swap(next);
@@ -76,6 +97,16 @@
     if (kioskMode !== "cycle") return;
     cycleIndex = (cycleIndex + 1) % cycleModes.length;
     loadMode(cycleModes[cycleIndex]);
+  };
+  const tapCycle = () => {
+    if (kioskMode !== "cycle") return;
+    const now = Date.now();
+    cycleTaps = cycleTaps.filter((when) => now - when < cycleWindow);
+    cycleTaps.push(now);
+    if (cycleTaps.length >= 3) {
+      cycleTaps = [];
+      cycle();
+    }
   };
   const TILE = 512;  // render/paper.py TILE
   // Match the page's corner and scale, so its paper runs on past the edge.
@@ -116,20 +147,26 @@
     clearTimeout(fade);
     fade = setTimeout(sleep, 3000);
   };
-  // A mouse wakes the controls while it moves; a tap toggles them, as in a photo viewer.
+  // A mouse wakes the controls while it moves; a tap only wakes the UI at first,
+  // then a triple tap cycles the kiosk when cycle mode is active.
   addEventListener("pointermove", (e) => { if (e.pointerType === "mouse") wake(); });
   addEventListener("pointerdown", (e) => {
     const settingsTap = e.target.closest("#settings");
-    if (e.pointerType === "mouse" || !root.classList.contains("awake")) wake();
-    if (kioskMode === "cycle" && !settingsTap) cycle();
     if (settingsTap) return;
-    if (e.pointerType === "touch" && root.classList.contains("awake")) sleep();
+    const asleep = !root.classList.contains("awake");
+    if (e.pointerType === "mouse" || asleep) {
+      if (asleep) wake();
+      return;
+    }
+    if (kioskMode === "cycle") tapCycle();
+    sleep();
   });
   let token = null;
   async function tick() {
     try {
       const state = await (await fetch("/state", {cache: "no-store"})).json();
       kioskMode = state.mode || kioskMode;
+      syncModeNote();
       if (state.token !== token) {
         token = state.token;
         const next = new Image();  // decode before swapping, so the frame never blanks
@@ -141,6 +178,7 @@
     } catch (e) {}  // transient: retry next tick
     setTimeout(tick, DELAY);
   }
+  syncModeNote();
   tick();
 </script>
 </body>
