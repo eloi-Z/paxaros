@@ -30,7 +30,14 @@ from . import wifi
 from .languages import STATION, Drawable, Namer, english_name, station_locale
 from .names import drawable_keys, image_for, normalize, perches_for, resolve
 from .render import fonts
-from .render.collage import KEY_LIMIT, NO_LIMIT, gather_entries, render_collage, selected_species
+from .render.collage import (
+    KEY_LIMIT,
+    NO_LIMIT,
+    bird_positions,
+    gather_entries,
+    render_collage,
+    selected_species,
+)
 from .render.page import NEW, Edges, day_ordinal
 from .render.plate import effective_margin, render_plate
 from .render.setup import setup_page
@@ -412,6 +419,35 @@ def render(ctx: Context) -> Image.Image:
 def subjects(ctx: Context) -> list[str]:
     """The species the current page is about."""
     return mode_of(ctx.mode).subjects(ctx)
+
+
+def subject_positions(ctx: Context) -> list[dict[str, float | str]]:
+    """The displayed collage's bird positions, when it is a collage page."""
+    if ctx.mode not in ("collage", "interactive"):
+        return []
+    entries = gather_entries(
+        ctx.source,
+        ctx.images_dir,
+        ctx.style,
+        ctx.day,
+        ctx.lookback_hours,
+        ctx.species_limit,
+        ctx.ranking,
+        _spotlit(ctx),
+    )
+    return bird_positions(
+        entries,
+        ctx.resolution,
+        ctx.show_names,
+        ctx.textured,
+        ctx.font_key,
+        ctx.label_size,
+        _labeller(ctx),
+        ctx.layout,
+        ctx.margin,
+        ctx.name_key,
+        _spotlit(ctx),
+    )
 
 
 def setup_screen(

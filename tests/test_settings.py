@@ -41,6 +41,12 @@ def test_defaults_when_file_absent(tmp_path):
     assert store.get() == Settings()
 
 
+def test_bird_info_setting_saves_both_ways(tmp_path):
+    path = tmp_path / "settings.json"
+    assert SettingsStore(path).update(show_bird_info=False).show_bird_info is False
+    assert SettingsStore(path).get().show_bird_info is False
+
+
 def test_saved_cycle_mode_migrates_to_interactive(tmp_path):
     path = tmp_path / "settings.json"
     path.write_text(json.dumps({"mode": "cycle"}))

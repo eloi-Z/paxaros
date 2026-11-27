@@ -552,6 +552,8 @@ def _names_field(
     return (
         f'<div class="field" id="names"><span>Labels</span>'
         f"{_checkbox('show_names', 'Display bird names', settings.show_names)}"
+        f'<input type="hidden" name="{CHECKBOXES}" value="show_bird_info">'
+        f"{_checkbox('show_bird_info', 'Show species information', settings.show_bird_info)}"
         f"{note}"
         f'<div class="sub" id="name-key"><input type="hidden" name="{CHECKBOXES}" value="name_key">'
         f"{_checkbox('name_key', f'<span>Numbered key {_hint(NAME_KEY)}</span>', settings.name_key)}</div>"

@@ -484,6 +484,51 @@ def render_collage(
     return canvas
 
 
+def bird_positions(
+    entries: list[tuple[str, Path | None]],
+    resolution: tuple[int, int],
+    show_names: bool,
+    textured: bool,
+    font_key: str,
+    label_size: str,
+    label_text: Callable[[str], str],
+    layout: str,
+    margin: Edges,
+    name_key: bool,
+    spotlight: str | None,
+) -> list[dict[str, float | str]]:
+    """Species names and plate centres at the rendered canvas's pixel size."""
+    kept = [(name, path) for name, path in entries if path is not None]
+    if not kept or (show_names and name_key):
+        return []
+    scale = min(resolution) / _PACK_SHORT
+    pack = (round(resolution[0] / scale), round(resolution[1] / scale))
+    canvas = blank(resolution, textured)
+    names = [name for name, _ in kept]
+    placed, _used_px = _draw_birds(
+        canvas,
+        kept,
+        (0, 0),
+        pack,
+        scale,
+        textured,
+        font_key if show_names else None,
+        label_px(*pack, label_size),
+        label_text,
+        layout,
+        margin,
+        spotlight=spotlight,
+    )
+    return [
+        {
+            "scientific_name": names[p.index],
+            "x": ((p.label_at or p.at)[0] + (p.label_w if p.label_at else p.dim) / 2) * scale,
+            "y": (p.label_at or p.at)[1] * scale,
+        }
+        for p in placed
+    ]
+
+
 def _draw_birds(
     canvas: Image.Image,
     kept: list[tuple[str, Path]],

@@ -48,7 +48,7 @@
   .awake #settings { pointer-events: auto; }
   html:not(.awake) { cursor: none; }
   #settings-wrap {
-    display: flex; flex-direction: row-reverse; align-items: center; gap: 0.4rem;
+    display: flex; flex-direction: row; align-items: center; gap: 0.4rem;
     pointer-events: auto;
   }
   #mode-controls {
@@ -69,6 +69,32 @@
   }
   #settings svg { width: 26px; height: 26px; }
   #settings:focus-visible { outline: 2px solid #5c5a54; border-radius: 50%; }
+  #bird-info-button {
+    display: none; height: 44px; padding: 0 0.7rem; border: 0; border-radius: 6px;
+    background: rgba(242, 237, 226, 0.92); color: #5c5a54; font: 0.75rem/1 system-ui, sans-serif;
+  }
+  #bird-info-button.visible { display: block; }
+  #bird-info-button.active { background: #5c5a54; color: #f2ede2; }
+  #bird-markers {
+    position: fixed; z-index: 3; display: none; gap: 0.25rem;
+    justify-content: center; pointer-events: none;
+  }
+  #bird-markers.visible { display: flex; }
+  .bird-marker {
+    width: 32px; height: 32px; border: 0; border-radius: 50%; padding: 0;
+    display: grid; place-items: center; background: rgba(242, 237, 226, 0.08);
+    color: #343331; border: 2px solid #343331; font: 700 0.8rem/1 Georgia, serif;
+    pointer-events: auto; cursor: pointer;
+  }
+  #bird-info {
+    width: min(34rem, calc(100vw - 2rem)); max-height: min(34rem, calc(100vh - 2rem));
+    border: 0; border-radius: 8px; padding: 1rem 1.1rem; background: #f2ede2; color: #343331;
+  }
+  #bird-info::backdrop { background: rgba(52, 51, 49, 0.42); }
+  #bird-info header { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+  #bird-info h2 { margin: 0; font: 700 1.15rem/1.3 Georgia, serif; }
+  #bird-info button { border: 0; background: transparent; color: #5c5a54; cursor: pointer; }
+  #bird-info-detail { margin-top: 0.8rem; line-height: 1.5; }
   @media (prefers-reduced-motion: reduce) { #controls { transition: none; } }
 </style>
 </head>
@@ -86,6 +112,7 @@
       <!-- Lucide's "settings" icon (ISC licence) -->
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
     </a>
+    <button id="bird-info-button" type="button" aria-label="Species information" title="Species information">Info</button>
     <div id="mode-controls" aria-label="Page mode">
       <button class="mode-button" type="button" data-mode="collage">Composición</button>
       <button class="mode-button" type="button" data-mode="latest">Último detectado</button>
@@ -93,6 +120,11 @@
     </div>
   </div>
 </div>
+<div id="bird-markers" aria-label="Species information markers"></div>
+<dialog id="bird-info">
+  <header><h2>Información das especies</h2><button id="bird-info-close" type="button" aria-label="Close">Pechar</button></header>
+  <div id="bird-info-detail"></div>
+</dialog>
 <noscript><p>Paxaros do xardín needs JavaScript to run in a browser.</p></noscript>
 <script>
   const DELAY = 5000;  // /state is one query, no render
@@ -106,7 +138,14 @@
   const paper = document.getElementById("paper");
   const over = document.getElementById("over");
   const waiting = document.getElementById("waiting");
+  const birdInfoButton = document.getElementById("bird-info-button");
+  const birdInfo = document.getElementById("bird-info");
+  const birdMarkers = document.getElementById("bird-markers");
+  const birdInfoDetail = document.getElementById("bird-info-detail");
   let lookbackHours = 24;
+  let showBirdInfo = true;
+  let birdInfoMode = false;
+  let birdSubjects = [];
   const periodText = (hours) => {
     if (hours === 0) return "en todo o tempo";
     if (hours === 0.25) return "15 minutos";
@@ -130,6 +169,16 @@
   // Only ever seen before the first render: once a page exists the server holds
   // it through an outage, so a blip leaves the birds up rather than a message.
   const show = (page) => { collage.hidden = !page; waiting.hidden = page; };
+  const positionBirdMarkers = () => {
+    if (!collage.naturalWidth || !collage.clientWidth) return;
+    const box = collage.getBoundingClientRect();
+    birdMarkers.querySelectorAll(".bird-marker").forEach((marker) => {
+      const x = Number(marker.dataset.x || 0);
+      const y = Number(marker.dataset.y || 0);
+      marker.style.left = box.left + x * box.width / collage.naturalWidth - 16 + "px";
+      marker.style.top = box.top + y * box.height / collage.naturalHeight - 16 + "px";
+    });
+  };
   const syncModeControls = () => {
     modeControls.classList.toggle("visible", kioskMode === "interactive");
     modeControls.querySelectorAll(".mode-button").forEach((button) => {
@@ -147,6 +196,90 @@
     next.onload = () => { hideLoading(); swap(next); };
     next.src = "/collage.png?mode=" + encodeURIComponent(mode) + "&v=" + Date.now();
   };
+  const showSpeciesInfo = async (name) => {
+    birdInfoDetail.textContent = "Cargando información…";
+    try {
+      const answer = await fetch("/species-info?name=" + encodeURIComponent(name), {cache: "no-store"});
+      const data = await answer.json();
+      const record = data.species;
+      if (!record) {
+        birdInfoDetail.textContent = "Non hai información desta especie rexistrada para España.";
+        return;
+      }
+      birdInfoDetail.innerHTML = "";
+      const common = document.createElement("strong");
+      common.textContent = record.common_name_gl || record.common_name_es || record.common_name || record.scientific_name;
+      const scientific = document.createElement("div");
+      scientific.textContent = record.scientific_name;
+      const summary = document.createElement("p");
+      summary.textContent = record.summary_gl || record.description_gl || record.summary_es || record.description_es || record.summary || record.description;
+      birdInfoDetail.append(common, scientific, summary);
+      if (record.conservation_status) {
+        const status = document.createElement("p");
+        status.textContent = "Estado de conservación: " + record.conservation_status;
+        birdInfoDetail.append(status);
+      }
+      if (record.source_url) {
+        const sources = document.createElement("p");
+        const wikipedia = document.createElement("a");
+        wikipedia.href = record.source_url;
+        wikipedia.target = "_blank";
+        wikipedia.rel = "noopener";
+        wikipedia.textContent = "Wiki";
+        sources.append(wikipedia);
+        if (record.google_seo_url) {
+          const separator = document.createElement("span");
+          separator.textContent = " · ";
+          const seo = document.createElement("a");
+          seo.href = record.google_seo_url;
+          seo.target = "_blank";
+          seo.rel = "noopener";
+          seo.textContent = "SEO/BirdLife";
+          sources.append(separator, seo);
+        }
+        birdInfoDetail.append(sources);
+      }
+    } catch (error) {
+      birdInfoDetail.textContent = "Non se puido cargar a información.";
+    }
+  };
+  const buildBirdMarkers = () => {
+    birdMarkers.textContent = "";
+    birdSubjects.forEach((species) => {
+      const marker = document.createElement("button");
+      marker.type = "button";
+      marker.className = "bird-marker";
+      marker.textContent = "i";
+      const name = species.common_name_gl || species.common_name || species.scientific_name;
+      marker.setAttribute("aria-label", "Información sobre " + name);
+      marker.title = name;
+      marker.dataset.x = String(species.x || 0);
+      marker.dataset.y = String(species.y || 0);
+      marker.style.position = "fixed";
+      marker.addEventListener("click", () => {
+        if (!birdInfo.open) birdInfo.showModal();
+        showSpeciesInfo(species.scientific_name);
+      });
+      birdMarkers.append(marker);
+    });
+  };
+  birdInfoButton.addEventListener("click", async () => {
+    birdInfoMode = !birdInfoMode;
+    birdInfoButton.classList.toggle("active", birdInfoMode);
+    birdMarkers.classList.toggle("visible", birdInfoMode);
+    if (!birdInfoMode) return;
+    try {
+      const answer = await fetch("/subjects", {cache: "no-store"});
+      const data = await answer.json();
+      birdSubjects = data.species;
+      buildBirdMarkers();
+      positionBirdMarkers();
+    } catch (error) {
+      birdSubjects = [];
+      buildBirdMarkers();
+    }
+  });
+  document.getElementById("bird-info-close").addEventListener("click", () => birdInfo.close());
   modeControls.querySelectorAll(".mode-button").forEach((button) => {
     button.addEventListener("click", () => {
       if (kioskMode !== "interactive") return;
@@ -170,12 +303,13 @@
     const reveal = collage.hidden && !calm.matches;
     show(true);
     fitPaper();
+    positionBirdMarkers();
     paper.className = reveal ? "up fade" : "up";
     if (!reveal) return;
     collage.className = "fade";
     collage.onanimationend = () => { paper.className = "up"; collage.className = ""; };
   };
-  addEventListener("resize", fitPaper);
+  addEventListener("resize", () => { fitPaper(); positionBirdMarkers(); });
   fitPaper();
   collage.onerror = () => show(false);
   // Crossfade in place; a new page shape moves the paper too, so that snaps.
@@ -198,7 +332,7 @@
   // A mouse wakes the controls while it moves; a tap only wakes the UI.
   addEventListener("pointermove", (e) => { if (e.pointerType === "mouse") wake(); });
   addEventListener("pointerdown", (e) => {
-    const controlTap = e.target.closest("#settings, #mode-controls");
+    const controlTap = e.target.closest("#settings, #mode-controls, #bird-info-button, #bird-markers, #bird-info");
     if (controlTap) return;
     const asleep = !root.classList.contains("awake");
     if (e.pointerType === "mouse" || asleep) {
@@ -213,6 +347,13 @@
       const state = await (await fetch("/state", {cache: "no-store"})).json();
       kioskMode = state.mode || kioskMode;
       lookbackHours = Number(state.lookback_hours ?? lookbackHours);
+      showBirdInfo = state.show_bird_info !== false;
+      birdInfoButton.classList.toggle("visible", showBirdInfo);
+      if (!showBirdInfo && birdInfoMode) {
+        birdInfoMode = false;
+        birdInfoButton.classList.remove("active");
+        birdMarkers.classList.remove("visible");
+      }
       loadingMessage();
       syncModeControls();
       if (state.token !== token) {

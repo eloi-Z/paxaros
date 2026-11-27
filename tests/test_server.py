@@ -20,7 +20,7 @@ from types import SimpleNamespace
 import pytest
 from PIL import Image
 
-from fugleramme import api, birdweather, fake
+from fugleramme import api, birdinfo, birdweather, fake
 from fugleramme.api import ApiSource
 from fugleramme.settings import Settings, SettingsStore
 from fugleramme.status import Status
@@ -140,6 +140,34 @@ def test_every_route_answers_with_what_it_promises(frame, route, content_type):
 
 def test_an_unknown_route_is_a_404(frame):
     assert _fetch(frame + "/nope")[0] == 404
+
+
+def test_kiosk_uses_bird_markers_and_the_info_button_is_right_of_the_gear():
+    html = (server.STATIC_DIR / "kiosk.html").read_text()
+    assert 'id="settings-wrap"' in html
+    assert 'id="bird-markers"' in html
+    assert 'marker.className = "bird-marker"' in html
+    assert 'bird-info-list' not in html
+    assert 'record.wikipedia_url' not in html
+    assert 'record.inaturalist_url' not in html
+
+
+def test_subjects_and_species_info_are_public(frame, monkeypatch):
+    monkeypatch.setattr(
+        server.birdinfo,
+        "lookup",
+        lambda name, cache, spanish_name="": {
+            "scientific_name": name,
+            "common_name": "Eurasian Blackbird",
+            "summary": "A thrush native to Europe.",
+            "conservation_status": "LC",
+            "spain_place_id": 6774,
+        },
+    )
+    subjects = json.loads(_fetch(frame + "/subjects")[2])
+    assert subjects["species"]
+    info = json.loads(_fetch(frame + "/species-info?name=Turdus%20merula")[2])
+    assert info["species"]["spain_place_id"] == 6774
 
 
 def test_state_reports_the_selected_lookback_window(frame):
@@ -518,6 +546,8 @@ def test_every_route_is_either_the_kiosk_or_behind_the_password(tmp_path, source
         "/frame.e6",
         "/frame.png",
         "/state",
+        "/subjects",
+        "/species-info",
         "/paper.png",
         "/title.ttf",
         "/health",

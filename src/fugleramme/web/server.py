@@ -40,8 +40,8 @@ from pathlib import Path
 from typing import ClassVar
 from urllib.parse import parse_qs, urlencode, urlparse
 
-from .. import __version__, buttons, e6, modes, updates, wifi
-from ..languages import namer
+from .. import __version__, birdinfo, buttons, e6, modes, updates, wifi
+from ..languages import dictionary, namer
 from ..panel import Panel, resolution_of, to_glass
 from ..render.fonts import cut
 from ..render.page import banded
@@ -515,10 +515,45 @@ def make_handler(
             self._send(
                 200,
                 json.dumps(
-                    {"token": token, "mode": settings.mode, "lookback_hours": settings.lookback_hours}
+                    {
+                        "token": token,
+                        "mode": settings.mode,
+                        "lookback_hours": settings.lookback_hours,
+                        "show_bird_info": settings.show_bird_info,
+                    }
                 ).encode(),
                 JSON,
             )
+
+        def _subjects(self):
+            ctx = self._context(store.get())
+            rows = modes.subjects(ctx)
+            positions = {row["scientific_name"]: row for row in modes.subject_positions(ctx)}
+            self._send(
+                200,
+                json.dumps(
+                    {
+                        "species": [
+                            {
+                                "scientific_name": name,
+                                "common_name": ctx.namer.inline(name),
+                                "x": positions.get(name, {}).get("x", 0),
+                                "y": positions.get(name, {}).get("y", 0),
+                            }
+                            for name in rows
+                        ]
+                    }
+                ).encode(),
+                JSON,
+            )
+
+        def _species_info(self):
+            name = self._query().get("name", [""])[0].strip()
+            cache = store.path.parent / "species-info"
+            spanish_names, _version = dictionary("es", store.path.parent)
+            spanish_name = spanish_names.get(name, "")
+            record = birdinfo.lookup(name, cache, spanish_name)
+            self._send(200, json.dumps({"species": record}).encode(), JSON)
 
         def _species(self):
             ctx = self._context(self._edited())
@@ -583,6 +618,8 @@ def make_handler(
             "/frame.png": _frame_png,
             "/preview.png": _preview_png,
             "/state": _state,
+            "/subjects": _subjects,
+            "/species-info": _species_info,
             "/paper.png": _paper,
             "/title.ttf": _title,
             "/species": _species,
