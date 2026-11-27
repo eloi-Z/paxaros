@@ -539,6 +539,8 @@ def make_handler(
                                 "common_name": ctx.namer.inline(name),
                                 "x": positions.get(name, {}).get("x", 0),
                                 "y": positions.get(name, {}).get("y", 0),
+                                "width": positions.get(name, {}).get("width", 0),
+                                "height": positions.get(name, {}).get("height", 0),
                             }
                             for name in rows
                         ]

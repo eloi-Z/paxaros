@@ -40,52 +40,72 @@
   p a { color: inherit; }
   /* A video player's chrome: shown by a tap or a moving mouse, so the page at rest is only the picture. */
   #controls {
-    position: fixed; inset: 0 0 auto; height: 6rem; display: flex; justify-content: flex-end; align-items: flex-start;
-    padding: calc(8px + env(safe-area-inset-top, 0px)) calc(8px + env(safe-area-inset-right, 0px)) 0 0;
+    position: fixed; inset: auto 0 0; min-height: calc(60px + env(safe-area-inset-bottom, 0px));
+    display: flex; justify-content: center; align-items: center;
+    padding: 8px calc(8px + env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) calc(8px + env(safe-area-inset-left, 0px));
+    background: rgba(242, 237, 226, 0.94); border-top: 1px solid rgba(92, 90, 84, 0.18);
     opacity: 0; transition: opacity 0.3s; pointer-events: none;
   }
   .awake #controls, #controls:focus-within { opacity: 1; }
   .awake #settings { pointer-events: auto; }
   html:not(.awake) { cursor: none; }
   #settings-wrap {
-    display: flex; flex-direction: row; align-items: center; gap: 0.4rem;
-    pointer-events: auto;
+    width: min(100%, 34rem); display: flex; flex-direction: row; justify-content: center; align-items: center;
+    gap: 0.35rem; pointer-events: auto;
   }
   #mode-controls {
     display: none; align-items: center; gap: 0.25rem;
   }
-  #mode-controls.visible { display: flex; }
+  #mode-controls.visible { display: flex; flex: 1 1 auto; }
   .mode-button {
-    height: 44px; min-width: 44px; padding: 0 0.55rem; border: 0; border-radius: 6px;
+    height: 48px; min-width: 48px; padding: 0 0.55rem; border: 0; border-radius: 6px;
     background: rgba(242, 237, 226, 0.92); color: #5c5a54;
     box-shadow: 0 0 3px rgba(92, 90, 84, 0.18);
     font: 0.75rem/1 system-ui, sans-serif; cursor: pointer;
   }
   .mode-button.active { background: #5c5a54; color: #f2ede2; }
+  @media (max-width: 380px) {
+    #controls { padding-inline: 4px; }
+    #settings-wrap { gap: 0.2rem; }
+    #settings, #bird-info-button { height: 44px; }
+    #settings { width: 44px; flex-basis: 44px; }
+    #bird-info-button { min-width: 44px; padding-inline: 0.45rem; }
+    .mode-button { height: 44px; min-width: 44px; padding-inline: 0.3rem; font-size: 0.68rem; }
+  }
   .mode-button:focus-visible { outline: 2px solid #5c5a54; outline-offset: 2px; }
   #settings {
-    display: grid; place-items: center; width: 44px; height: 44px; color: #5c5a54;
+    display: grid; place-items: center; width: 48px; height: 48px; flex: 0 0 48px; color: #5c5a54;
     filter: drop-shadow(0 0 3px #f2ede2);
   }
   #settings svg { width: 26px; height: 26px; }
   #settings:focus-visible { outline: 2px solid #5c5a54; border-radius: 50%; }
   #bird-info-button {
-    display: none; height: 44px; padding: 0 0.7rem; border: 0; border-radius: 6px;
+    display: none; height: 48px; min-width: 48px; padding: 0 0.7rem; border: 0; border-radius: 6px;
     background: rgba(242, 237, 226, 0.92); color: #5c5a54; font: 0.75rem/1 system-ui, sans-serif;
   }
   #bird-info-button.visible { display: block; }
   #bird-info-button.active { background: #5c5a54; color: #f2ede2; }
+  #bird-info-hint {
+    display: none; color: #5c5a54; font: 0.72rem/1.2 system-ui, sans-serif;
+  }
+  #bird-info-hint.visible { display: block; }
   #bird-markers {
     position: fixed; z-index: 3; display: none; gap: 0.25rem;
     justify-content: center; pointer-events: none;
   }
   #bird-markers.visible { display: flex; }
   .bird-marker {
-    width: 32px; height: 32px; border: 0; border-radius: 50%; padding: 0;
-    display: grid; place-items: center; background: rgba(242, 237, 226, 0.08);
-    color: #343331; border: 2px solid #343331; font: 700 0.8rem/1 Georgia, serif;
+    width: 44px; height: 44px; border: 0; border-radius: 4px; padding: 0;
+    background: transparent; color: transparent; font-size: 0;
     pointer-events: auto; cursor: pointer;
   }
+  .bird-marker {
+    min-width: 32px;
+    min-height: 32px;
+    background: transparent;
+    border: 0;
+  }
+  .bird-marker:focus-visible { outline: 2px solid #343331; outline-offset: 2px; }
   #bird-info {
     width: min(34rem, calc(100vw - 2rem)); max-height: min(34rem, calc(100vh - 2rem));
     border: 0; border-radius: 8px; padding: 1rem 1.1rem; background: #f2ede2; color: #343331;
@@ -113,6 +133,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
     </a>
     <button id="bird-info-button" type="button" aria-label="Species information" title="Species information">Info</button>
+    <span id="bird-info-hint">Toca un paxaro para ver a súa información</span>
     <div id="mode-controls" aria-label="Page mode">
       <button class="mode-button" type="button" data-mode="collage">Composición</button>
       <button class="mode-button" type="button" data-mode="latest">Último detectado</button>
@@ -139,6 +160,7 @@
   const over = document.getElementById("over");
   const waiting = document.getElementById("waiting");
   const birdInfoButton = document.getElementById("bird-info-button");
+  const birdInfoHint = document.getElementById("bird-info-hint");
   const birdInfo = document.getElementById("bird-info");
   const birdMarkers = document.getElementById("bird-markers");
   const birdInfoDetail = document.getElementById("bird-info-detail");
@@ -175,8 +197,17 @@
     birdMarkers.querySelectorAll(".bird-marker").forEach((marker) => {
       const x = Number(marker.dataset.x || 0);
       const y = Number(marker.dataset.y || 0);
-      marker.style.left = box.left + x * box.width / collage.naturalWidth - 16 + "px";
-      marker.style.top = box.top + y * box.height / collage.naturalHeight - 16 + "px";
+      const width = Number(marker.dataset.width || 0);
+      const height = Number(marker.dataset.height || 0);
+      const viewport = visualViewport;
+      const viewportLeft = viewport ? viewport.offsetLeft : 0;
+      const viewportTop = viewport ? viewport.offsetTop : 0;
+      marker.style.left = box.left + viewportLeft + x * box.width / collage.naturalWidth + "px";
+      marker.style.top = box.top + viewportTop + y * box.height / collage.naturalHeight + "px";
+      const hitWidth = Math.max(32, width * box.width / collage.naturalWidth);
+      const hitHeight = Math.max(32, height * box.height / collage.naturalHeight);
+      marker.style.width = hitWidth + "px";
+      marker.style.height = hitHeight + "px";
     });
   };
   const syncModeControls = () => {
@@ -249,12 +280,14 @@
       const marker = document.createElement("button");
       marker.type = "button";
       marker.className = "bird-marker";
-      marker.textContent = "i";
+      marker.textContent = "";
       const name = species.common_name_gl || species.common_name || species.scientific_name;
       marker.setAttribute("aria-label", "Información sobre " + name);
       marker.title = name;
       marker.dataset.x = String(species.x || 0);
       marker.dataset.y = String(species.y || 0);
+      marker.dataset.width = String(species.width || 0);
+      marker.dataset.height = String(species.height || 0);
       marker.style.position = "fixed";
       marker.addEventListener("click", () => {
         if (!birdInfo.open) birdInfo.showModal();
@@ -266,6 +299,7 @@
   birdInfoButton.addEventListener("click", async () => {
     birdInfoMode = !birdInfoMode;
     birdInfoButton.classList.toggle("active", birdInfoMode);
+    birdInfoHint.classList.toggle("visible", birdInfoMode);
     birdMarkers.classList.toggle("visible", birdInfoMode);
     if (!birdInfoMode) return;
     try {
@@ -310,6 +344,8 @@
     collage.onanimationend = () => { paper.className = "up"; collage.className = ""; };
   };
   addEventListener("resize", () => { fitPaper(); positionBirdMarkers(); });
+  visualViewport?.addEventListener("resize", positionBirdMarkers);
+  visualViewport?.addEventListener("scroll", positionBirdMarkers);
   fitPaper();
   collage.onerror = () => show(false);
   // Crossfade in place; a new page shape moves the paper too, so that snaps.
@@ -352,6 +388,7 @@
       if (!showBirdInfo && birdInfoMode) {
         birdInfoMode = false;
         birdInfoButton.classList.remove("active");
+        birdInfoHint.classList.remove("visible");
         birdMarkers.classList.remove("visible");
       }
       loadingMessage();

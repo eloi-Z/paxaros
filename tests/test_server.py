@@ -146,6 +146,9 @@ def test_kiosk_uses_bird_markers_and_the_info_button_is_right_of_the_gear():
     html = (server.STATIC_DIR / "kiosk.html").read_text()
     assert 'id="settings-wrap"' in html
     assert 'id="bird-markers"' in html
+    assert 'inset: auto 0 0' in html
+    assert 'marker.dataset.width' in html
+    assert 'marker.dataset.height' in html
     assert 'marker.className = "bird-marker"' in html
     assert 'bird-info-list' not in html
     assert 'record.wikipedia_url' not in html

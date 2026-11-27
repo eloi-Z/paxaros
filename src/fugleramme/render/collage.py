@@ -519,11 +519,15 @@ def bird_positions(
         margin,
         spotlight=spotlight,
     )
+    arts = [trim(path) for _, path in kept]
+    flips = [_flip(name) for name in names]
     return [
         {
             "scientific_name": names[p.index],
-            "x": ((p.label_at or p.at)[0] + (p.label_w if p.label_at else p.dim) / 2) * scale,
-            "y": (p.label_at or p.at)[1] * scale,
+            "x": p.at[0] * scale,
+            "y": p.at[1] * scale,
+            "width": (art := _scaled(arts[p.index], round(p.dim * scale), flips[p.index])).width,
+            "height": art.height,
         }
         for p in placed
     ]
