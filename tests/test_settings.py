@@ -41,6 +41,12 @@ def test_defaults_when_file_absent(tmp_path):
     assert store.get() == Settings()
 
 
+def test_saved_cycle_mode_migrates_to_interactive(tmp_path):
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps({"mode": "cycle"}))
+    assert SettingsStore(path).get().mode == "interactive"
+
+
 def test_update_persists_and_clamps(tmp_path):
     path = tmp_path / "settings.json"
     store = SettingsStore(path)

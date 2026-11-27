@@ -48,20 +48,27 @@
   .awake #settings { pointer-events: auto; }
   html:not(.awake) { cursor: none; }
   #settings-wrap {
-    display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem;
+    display: flex; flex-direction: row-reverse; align-items: center; gap: 0.4rem;
     pointer-events: auto;
   }
+  #mode-controls {
+    display: none; align-items: center; gap: 0.25rem;
+  }
+  #mode-controls.visible { display: flex; }
+  .mode-button {
+    height: 44px; min-width: 44px; padding: 0 0.55rem; border: 0; border-radius: 6px;
+    background: rgba(242, 237, 226, 0.92); color: #5c5a54;
+    box-shadow: 0 0 3px rgba(92, 90, 84, 0.18);
+    font: 0.75rem/1 system-ui, sans-serif; cursor: pointer;
+  }
+  .mode-button.active { background: #5c5a54; color: #f2ede2; }
+  .mode-button:focus-visible { outline: 2px solid #5c5a54; outline-offset: 2px; }
   #settings {
     display: grid; place-items: center; width: 44px; height: 44px; color: #5c5a54;
     filter: drop-shadow(0 0 3px #f2ede2);
   }
   #settings svg { width: 26px; height: 26px; }
   #settings:focus-visible { outline: 2px solid #5c5a54; border-radius: 50%; }
-  #cycle-note {
-    display: none; padding: 0.25rem 0.5rem; border-radius: 999px; background: rgba(92, 90, 84, 0.12);
-    color: #5c5a54; font: 0.7rem/1.2 system-ui, sans-serif; letter-spacing: 0.02em;
-  }
-  #cycle-note.visible { display: block; }
   @media (prefers-reduced-motion: reduce) { #controls { transition: none; } }
 </style>
 </head>
@@ -75,22 +82,24 @@
 <div id="over"></div>
 <div id="controls">
   <div id="settings-wrap">
-    <div id="cycle-note">Triple click/tap para cambiar vista</div>
     <a id="settings" href="/admin" aria-label="Settings" title="Settings">
       <!-- Lucide's "settings" icon (ISC licence) -->
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
     </a>
+    <div id="mode-controls" aria-label="Page mode">
+      <button class="mode-button" type="button" data-mode="collage">Composición</button>
+      <button class="mode-button" type="button" data-mode="latest">Último detectado</button>
+      <button class="mode-button" type="button" data-mode="arrival">Última especie descoberta</button>
+    </div>
   </div>
 </div>
 <noscript><p>Paxaros do xardín needs JavaScript to run in a browser.</p></noscript>
 <script>
   const DELAY = 5000;  // /state is one query, no render
-  const cycleModes = ["collage", "latest", "arrival"];
-  const cycleWindow = 2000; // three taps within this many milliseconds triggers a cycle
-  let cycleIndex = 0;
+  const interactiveModes = ["collage", "latest", "arrival"];
+  let interactiveIndex = 0;
   let kioskMode = "collage";
-  let cycleTaps = [];
-  const cycleNote = document.getElementById("cycle-note");
+  const modeControls = document.getElementById("mode-controls");
   const collage = document.getElementById("collage");
   const loading = document.getElementById("loading");
   const loadingText = document.getElementById("loading-text");
@@ -121,8 +130,11 @@
   // Only ever seen before the first render: once a page exists the server holds
   // it through an outage, so a blip leaves the birds up rather than a message.
   const show = (page) => { collage.hidden = !page; waiting.hidden = page; };
-  const syncModeNote = () => {
-    cycleNote.classList.toggle("visible", kioskMode === "cycle");
+  const syncModeControls = () => {
+    modeControls.classList.toggle("visible", kioskMode === "interactive");
+    modeControls.querySelectorAll(".mode-button").forEach((button) => {
+      button.classList.toggle("active", button.dataset.mode === interactiveModes[interactiveIndex]);
+    });
   };
   const showLoading = () => {
     loadingMessage();
@@ -135,21 +147,14 @@
     next.onload = () => { hideLoading(); swap(next); };
     next.src = "/collage.png?mode=" + encodeURIComponent(mode) + "&v=" + Date.now();
   };
-  const cycle = () => {
-    if (kioskMode !== "cycle") return;
-    cycleIndex = (cycleIndex + 1) % cycleModes.length;
-    loadMode(cycleModes[cycleIndex]);
-  };
-  const tapCycle = () => {
-    if (kioskMode !== "cycle") return;
-    const now = Date.now();
-    cycleTaps = cycleTaps.filter((when) => now - when < cycleWindow);
-    cycleTaps.push(now);
-    if (cycleTaps.length >= 3) {
-      cycleTaps = [];
-      cycle();
-    }
-  };
+  modeControls.querySelectorAll(".mode-button").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (kioskMode !== "interactive") return;
+      interactiveIndex = interactiveModes.indexOf(button.dataset.mode);
+      syncModeControls();
+      loadMode(button.dataset.mode);
+    });
+  });
   const TILE = 512;  // render/paper.py TILE
   // Match the page's corner and scale, so its paper runs on past the edge.
   const fitPaper = () => {
@@ -190,18 +195,16 @@
     clearTimeout(fade);
     fade = setTimeout(sleep, 3000);
   };
-  // A mouse wakes the controls while it moves; a tap only wakes the UI at first,
-  // then a triple tap cycles the kiosk when cycle mode is active.
+  // A mouse wakes the controls while it moves; a tap only wakes the UI.
   addEventListener("pointermove", (e) => { if (e.pointerType === "mouse") wake(); });
   addEventListener("pointerdown", (e) => {
-    const settingsTap = e.target.closest("#settings");
-    if (settingsTap) return;
+    const controlTap = e.target.closest("#settings, #mode-controls");
+    if (controlTap) return;
     const asleep = !root.classList.contains("awake");
     if (e.pointerType === "mouse" || asleep) {
       if (asleep) wake();
       return;
     }
-    if (kioskMode === "cycle") tapCycle();
     sleep();
   });
   let token = null;
@@ -211,20 +214,20 @@
       kioskMode = state.mode || kioskMode;
       lookbackHours = Number(state.lookback_hours ?? lookbackHours);
       loadingMessage();
-      syncModeNote();
+      syncModeControls();
       if (state.token !== token) {
         token = state.token;
         const next = new Image();  // decode before swapping, so the frame never blanks
         showLoading();
         next.onload = () => { hideLoading(); swap(next); };
-        const mode = kioskMode === "cycle" ? cycleModes[cycleIndex] : "";
+        const mode = kioskMode === "interactive" ? interactiveModes[interactiveIndex] : "";
         const query = mode ? "?mode=" + encodeURIComponent(mode) + "&" : "?";
         next.src = "/collage.png" + query + "v=" + encodeURIComponent(token);
       }
     } catch (e) {}  // transient: retry next tick
     setTimeout(tick, DELAY);
   }
-  syncModeNote();
+  syncModeControls();
   tick();
 </script>
 </body>

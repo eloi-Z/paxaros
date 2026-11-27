@@ -333,8 +333,11 @@ def _coerce(raw: dict, base: Settings | None = None) -> Settings:
     except (TypeError, ValueError):
         rotation = d.rotation
     rotation = _one_of(rotation, ROTATIONS, d.rotation)
+    mode = str(raw.get("mode", d.mode))
+    if mode == "cycle":
+        mode = "interactive"
     return Settings(
-        mode=_one_of(str(raw.get("mode", d.mode)), MODES, d.mode),
+        mode=_one_of(mode, MODES, d.mode),
         web_resolution=_one_of(
             str(raw.get("web_resolution", d.web_resolution)), WEB_HEIGHTS, d.web_resolution
         ),

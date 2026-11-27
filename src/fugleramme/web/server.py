@@ -435,7 +435,7 @@ def make_handler(
                 return
             settings = store.get()
             override = self._query().get("mode", [""])[0]
-            if settings.mode == "cycle" and override in modes.MODES:
+            if settings.mode == "interactive" and override in modes.MODES:
                 settings = replace(settings, mode=override)
             if source.base_url != last_from:
                 last_page, last_from = None, source.base_url

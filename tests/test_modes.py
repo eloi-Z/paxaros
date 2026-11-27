@@ -71,10 +71,10 @@ def _ctx(source, images, tmp_path, mode, panel=False, **overrides):
 
 def test_every_mode_is_offered_and_the_default_is_the_collage():
     assert modes.DEFAULT_MODE == "collage"
-    assert list(modes.MODES) == ["collage", "latest", "arrival", "cycle"]
-    assert [k for k, m in modes.MODES.items() if m.windowed] == ["collage", "cycle"]
+    assert list(modes.MODES) == ["collage", "latest", "arrival", "interactive"]
+    assert [k for k, m in modes.MODES.items() if m.windowed] == ["collage", "interactive"]
     assert modes.mode_of("gone") is modes.MODES["collage"]
-    assert modes.mode_of("cycle").label == "Cycle"
+    assert modes.mode_of("interactive").label == "Interactive"
 
 
 @pytest.mark.parametrize("mode", list(modes.MODES))
